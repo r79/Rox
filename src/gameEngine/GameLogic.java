@@ -28,11 +28,6 @@ public class GameLogic {
 	private boolean movingTiles = false;
 	private Tile selectedTile;
 
-	private int player1Points = 0;
-	private int player1Tiles = 0;
-	private int player2Points = 0;
-	private int player2Tiles = 0;
-
 	public GameLogic(Input input) {
 
 		this.input = input;
@@ -44,20 +39,22 @@ public class GameLogic {
 				tiles.add(new Tile(i, j));
 			}
 		}
+
+		setup();
 	}
 
 	// setup() bereitet das Spiel vor.
 	public void setup() {
 		int counter = 0;
 		for (Tile tile : getTiles()) {
-			tile.setStatus(TileStatus.EMPTY);
+			tile.setPlayer(0);
 			if (counter % 2 == 0) {
 				if (tile.getY() <= 1) {
-					tile.setStatus(TileStatus.PLAYER1);
+					tile.setPlayer(1);
 				}
 
 				if (tile.getY() > getFieldHeight() - 2) {
-					tile.setStatus(TileStatus.PLAYER2);
+					tile.setPlayer(2);
 				}
 			}
 
@@ -75,10 +72,10 @@ public class GameLogic {
 		for (Tile tile : getTiles()) {
 			if (getTiles().indexOf(tile) % 9 == 0
 					&& tile.getStatus() == TileStatus.PLAYER2) {
-				tile.setStatus(TileStatus.LOCKED);
+				tile.lock();
 			} else if ((getTiles().indexOf(tile) + 1) % 9 == 0
 					&& tile.getStatus() == TileStatus.PLAYER1) {
-				tile.setStatus(TileStatus.LOCKED);
+				tile.lock();
 			}
 
 			if (tile.getStatus() == TileStatus.PLAYER1) {
@@ -92,242 +89,196 @@ public class GameLogic {
 	// möglichen Spielzüge definiert.
 	public void step() throws IndexOutOfBoundsException {
 
-		if (isSetup()) {
-			setup();
-		}
-
 		for (Tile tile : getTiles()) {
-			if (getInput().getX() > tile.getX() * getTileSize()
-					&& getInput().getX() < tile.getX() * getTileSize()
-							+ getTileSize()) {
-				if (getInput().getY() > tile.getY() * getTileSize()
-						&& getInput().getY() < tile.getY() * getTileSize()
-								+ getTileSize()) {
+			if (tile.isOnTile(input.getX(), input.getY(), tileSize)) {
+				if (tile == selectedTile) {
+					tile.toggleSelect();
+				}
 
-					if (tile == selectedTile) {
-						if (tile.getStatus() == TileStatus.PLAYER1SELECTED) {
-							tile.setStatus(TileStatus.PLAYER1);
-						} else if (tile.getStatus() == TileStatus.PLAYER2SELECTED) {
-							tile.setStatus(TileStatus.PLAYER2);
+				if (tile.isPlayerTile()&&!movingTiles)
+					setSelectedTile(tile);
+					setMovingTiles(true);
+					tile.toggleSelect();
+
+				} else if (!tile.isPlayerTile()
+						&& isMovingTiles()) {
+					if ((tiles.indexOf(selectedTile) - tiles.indexOf(tile) <= 10 && tiles.indexOf(selectedTile) - tiles.indexOf(tile) >= 8)
+							|| (tiles.indexOf(tile)- tiles.indexOf(selectedTile) >= 8 && tiles.indexOf(tile)
+									- tiles.indexOf(selectedTile) <= 10)
+							|| (tiles.indexOf(tile)
+									- tiles.indexOf(selectedTile) >= 8 && tiles
+									.indexOf(tile)
+									- tiles.indexOf(selectedTile) <= 10)
+							|| (tiles.indexOf(selectedTile)
+									- tiles.indexOf(tile) == 1 || tiles
+									.indexOf(selectedTile)
+									- tiles.indexOf(tile) == -1)) {
+						if (getSelectedTile().getStatus() == TileStatus.PLAYER1SELECTED) {
+							tile.setPlayer(1);
+							selectedTile.setPlayer(0);
 						}
+
+						if (getSelectedTile().getStatus() == TileStatus.PLAYER2SELECTED) {
+							tile.setPlayer(2);
+							selectedTile.setPlayer(0);
+						}
+					} else if (selectedTile.getStatus() == TileStatus.PLAYER1SELECTED) {
+						selectedTile.setPlayer(1);
+					} else if (selectedTile.getStatus() == TileStatus.PLAYER2SELECTED) {
+						selectedTile.setPlayer(2);
 					}
 
-					if (tile.getStatus() == TileStatus.PLAYER1 && !movingTiles) {
-						setSelectedTile(tile);
-						setMovingTiles(true);
-						tile.setStatus(TileStatus.PLAYER1SELECTED);
+					movingTiles = false;
 
-					} else if (tile.getStatus() == TileStatus.PLAYER2
-							&& !movingTiles) {
-						setSelectedTile(tile);
-						setMovingTiles(true);
-						tile.setStatus(TileStatus.PLAYER2SELECTED);
-
-					} else if (tile.getStatus() == TileStatus.EMPTY
-							&& isMovingTiles()) {
-						if ((tiles.indexOf(selectedTile) - tiles.indexOf(tile) <= 10 && tiles
-								.indexOf(selectedTile) - tiles.indexOf(tile) >= 8)
-								|| (tiles.indexOf(tile)
-										- tiles.indexOf(selectedTile) >= 8 && tiles
-										.indexOf(tile)
-										- tiles.indexOf(selectedTile) <= 10)
-								|| (tiles.indexOf(tile)
-										- tiles.indexOf(selectedTile) >= 8 && tiles
-										.indexOf(tile)
-										- tiles.indexOf(selectedTile) <= 10)
-								|| (tiles.indexOf(selectedTile)
-										- tiles.indexOf(tile) == 1 || tiles
-										.indexOf(selectedTile)
-										- tiles.indexOf(tile) == -1)) {
-							if (getSelectedTile().getStatus() == TileStatus.PLAYER1SELECTED) {
-								tile.setStatus(TileStatus.PLAYER1);
-								getSelectedTile().setStatus(TileStatus.EMPTY);
-							}
-
-							if (getSelectedTile().getStatus() == TileStatus.PLAYER2SELECTED) {
-								tile.setStatus(TileStatus.PLAYER2);
-								getSelectedTile().setStatus(TileStatus.EMPTY);
-							}
-						} else if (selectedTile.getStatus() == TileStatus.PLAYER1SELECTED) {
-							selectedTile.setStatus(TileStatus.PLAYER1);
-						} else if (selectedTile.getStatus() == TileStatus.PLAYER2SELECTED) {
-							selectedTile.setStatus(TileStatus.PLAYER2);
-						}
-
-						movingTiles = false;
-
-					} else if (tile.getStatus() == TileStatus.PLAYER1
-							&& movingTiles) {
-						if (selectedTile.getStatus() == TileStatus.PLAYER1SELECTED) {
-							if (tiles.indexOf(tile) % 9 != 0) {
-								if (tiles.indexOf(selectedTile)
-										- tiles.indexOf(tile) == 8
-										&& tiles.get(tiles.indexOf(tile) - 8)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) - 8)
-											.setStatus(TileStatus.PLAYER1);
-									selectedTile.setStatus(TileStatus.EMPTY);
-
-								} else if (tiles.indexOf(tile)
-										- tiles.indexOf(selectedTile) == 10
-										&& tiles.get(tiles.indexOf(tile) + 10)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) + 10)
-											.setStatus(TileStatus.PLAYER1);
-									selectedTile.setStatus(TileStatus.EMPTY);
-
-								} else if (tiles.indexOf(tile)
-										- tiles.indexOf(selectedTile) == -10
-										&& tiles.get(tiles.indexOf(tile) - 10)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) - 10)
-											.setStatus(TileStatus.PLAYER1);
-									selectedTile.setStatus(TileStatus.EMPTY);
-								} else if (tiles.indexOf(selectedTile)
-										- tiles.indexOf(tile) == -8
-										&& tiles.get(tiles.indexOf(tile) + 8)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) + 8)
-											.setStatus(TileStatus.PLAYER1);
-									selectedTile.setStatus(TileStatus.EMPTY);
-								} else {
-									selectedTile.setStatus(TileStatus.PLAYER1);
-								}
-							} else {
-								selectedTile.setStatus(TileStatus.PLAYER1);
-							}
-
-						} else if (selectedTile.getStatus() == TileStatus.PLAYER2SELECTED) {
-							if (tiles.indexOf(tile) % 9 != 0) {
-								if (tiles.indexOf(selectedTile)
-										- tiles.indexOf(tile) == 8
-										&& tiles.get(tiles.indexOf(tile) - 8)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) - 8)
-											.setStatus(TileStatus.PLAYER2);
-									tile.setStatus(TileStatus.EMPTY);
-									selectedTile.setStatus(TileStatus.EMPTY);
-
-								} else if (tiles.indexOf(tile)
-										- tiles.indexOf(selectedTile) == 10
-										&& tiles.get(tiles.indexOf(tile) + 10)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) + 10)
-											.setStatus(TileStatus.PLAYER2);
-									tile.setStatus(TileStatus.EMPTY);
-									selectedTile.setStatus(TileStatus.EMPTY);
-
-								} else if (tiles.indexOf(selectedTile)
-										- tiles.indexOf(tile) == -8
-										&& tiles.get(tiles.indexOf(tile) + 8)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) + 8)
-											.setStatus(TileStatus.PLAYER2);
-									tile.setStatus(TileStatus.EMPTY);
-									selectedTile.setStatus(TileStatus.EMPTY);
-
-								} else if (tiles.indexOf(tile)
-										- tiles.indexOf(selectedTile) == -10
-										&& tiles.get(tiles.indexOf(tile) - 10)
-												.getStatus() == TileStatus.EMPTY) {
-									tiles.get(tiles.indexOf(tile) - 10)
-											.setStatus(TileStatus.PLAYER2);
-									tile.setStatus(TileStatus.EMPTY);
-									selectedTile.setStatus(TileStatus.EMPTY);
-								} else {
-									selectedTile.setStatus(TileStatus.PLAYER2);
-								}
-							} else {
-								selectedTile.setStatus(TileStatus.PLAYER2);
-							}
-						}
-
-						movingTiles = false;
-
-					} else if (tile.getStatus() == TileStatus.PLAYER2
-							&& movingTiles) {
-						if (selectedTile.getStatus() == TileStatus.PLAYER2SELECTED) {
-							if (tiles.indexOf(selectedTile)
-									- tiles.indexOf(tile) == 8
-									&& tiles.get(tiles.indexOf(tile) - 8)
-											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) - 8).setStatus(
-										TileStatus.PLAYER2);
-								selectedTile.setStatus(TileStatus.EMPTY);
+				} else if (tile.getStatus() == TileStatus.PLAYER1
+						&& movingTiles) {
+					if (selectedTile.getStatus() == TileStatus.PLAYER1SELECTED) {
+						if (tiles.indexOf(tile) % 9 != 0) {
+							if (tiles.indexOf(selectedTile) - tiles.indexOf(tile) == 8
+									&& !tiles.get(tiles.indexOf(tile) - 8).isPlayerTile()) {
+								tiles.get(tiles.indexOf(tile) - 8).setPlayer(1);
+								selectedTile.setPlayer(0);
 
 							} else if (tiles.indexOf(tile)
 									- tiles.indexOf(selectedTile) == 10
 									&& tiles.get(tiles.indexOf(tile) + 10)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) + 10).setStatus(
-										TileStatus.PLAYER2);
-								selectedTile.setStatus(TileStatus.EMPTY);
+								tiles.get(tiles.indexOf(tile) + 10).setPlayer(1);;
+								selectedTile.setPlayer(0);
 
 							} else if (tiles.indexOf(tile)
 									- tiles.indexOf(selectedTile) == -10
 									&& tiles.get(tiles.indexOf(tile) - 10)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) - 10).setStatus(
-										TileStatus.PLAYER2);
-								selectedTile.setStatus(TileStatus.EMPTY);
+								tiles.get(tiles.indexOf(tile) - 10).setPlayer(1);;
+								selectedTile.setPlayer(0);
 							} else if (tiles.indexOf(selectedTile)
 									- tiles.indexOf(tile) == -8
 									&& tiles.get(tiles.indexOf(tile) + 8)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) + 8).setStatus(
-										TileStatus.PLAYER2);
-								selectedTile.setStatus(TileStatus.EMPTY);
-
+								tiles.get(tiles.indexOf(tile) + 8).setPlayer(1);
+								selectedTile.setPlayer(0);
 							} else {
-								selectedTile.setStatus(TileStatus.PLAYER2);
+								selectedTile.setPlayer(1);
 							}
+						} else {
+							selectedTile.setPlayer(1);
+						}
 
-						} else if (selectedTile.getStatus() == TileStatus.PLAYER1SELECTED) {
+					} else if (selectedTile.getStatus() == TileStatus.PLAYER2SELECTED) {
+						if (tiles.indexOf(tile) % 9 != 0) {
 							if (tiles.indexOf(selectedTile)
 									- tiles.indexOf(tile) == 8
 									&& tiles.get(tiles.indexOf(tile) - 8)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) - 8).setStatus(
-										TileStatus.PLAYER1);
-								tile.setStatus(TileStatus.EMPTY);
-								selectedTile.setStatus(TileStatus.EMPTY);
+								tiles.get(tiles.indexOf(tile) - 8).setPlayer(2);
+								tile.setPlayer(0);
+								selectedTile.setPlayer(0);
 
 							} else if (tiles.indexOf(tile)
 									- tiles.indexOf(selectedTile) == 10
 									&& tiles.get(tiles.indexOf(tile) + 10)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) + 10).setStatus(
-										TileStatus.PLAYER1);
-								tile.setStatus(TileStatus.EMPTY);
-								selectedTile.setStatus(TileStatus.EMPTY);
+								tiles.get(tiles.indexOf(tile) + 10).setPlayer(2);
+								tile.setPlayer(0);
+								selectedTile.setPlayer(0);
+
 							} else if (tiles.indexOf(selectedTile)
 									- tiles.indexOf(tile) == -8
 									&& tiles.get(tiles.indexOf(tile) + 8)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) + 8).setStatus(
-										TileStatus.PLAYER1);
-								tile.setStatus(TileStatus.EMPTY);
-								selectedTile.setStatus(TileStatus.EMPTY);
+								tiles.get(tiles.indexOf(tile) + 8).setPlayer(2);
+								tile.setPlayer(0);
+								selectedTile.setPlayer(0);
 
 							} else if (tiles.indexOf(tile)
 									- tiles.indexOf(selectedTile) == -10
 									&& tiles.get(tiles.indexOf(tile) - 10)
 											.getStatus() == TileStatus.EMPTY) {
-								tiles.get(tiles.indexOf(tile) - 10).setStatus(
-										TileStatus.PLAYER1);
-								tile.setStatus(TileStatus.EMPTY);
-								selectedTile.setStatus(TileStatus.EMPTY);
+								tiles.get(tiles.indexOf(tile) - 10).setPlayer(2);
+								tile.setPlayer(0);
+								selectedTile.setPlayer(0);
 							} else {
-								selectedTile.setStatus(TileStatus.PLAYER1);
+								selectedTile.setPlayer(0);
 							}
+						} else {
+							selectedTile.setPlayer(0);
+						}
+					}
+
+					movingTiles = false;
+
+				} else if (tile.getStatus() == TileStatus.PLAYER2
+						&& movingTiles) {
+					if (selectedTile.getStatus() == TileStatus.PLAYER2SELECTED) {
+						if (tiles.indexOf(selectedTile) - tiles.indexOf(tile) == 8
+								&& tiles.get(tiles.indexOf(tile) - 8)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) - 8).setPlayer(2);
+							selectedTile.setPlayer(0);
+
+						} else if (tiles.indexOf(tile)
+								- tiles.indexOf(selectedTile) == 10
+								&& tiles.get(tiles.indexOf(tile) + 10)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) + 10).setPlayer(2);
+							selectedTile.setPlayer(0);
+
+						} else if (tiles.indexOf(tile)
+								- tiles.indexOf(selectedTile) == -10
+								&& tiles.get(tiles.indexOf(tile) - 10)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) - 10).setPlayer(2);
+							selectedTile.setPlayer(0);
+						} else if (tiles.indexOf(selectedTile)
+								- tiles.indexOf(tile) == -8
+								&& tiles.get(tiles.indexOf(tile) + 8)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) + 8).setPlayer(2);
+							selectedTile.setPlayer(0);
+
+						} else {
+							selectedTile.setPlayer(2);
 						}
 
-						movingTiles = false;
+					} else if (selectedTile.getStatus() == TileStatus.PLAYER1SELECTED) {
+						if (tiles.indexOf(selectedTile) - tiles.indexOf(tile) == 8
+								&& tiles.get(tiles.indexOf(tile) - 8)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) - 8).setPlayer(1);
+							tile.setPlayer(0);
+							selectedTile.setPlayer(0);
+
+						} else if (tiles.indexOf(tile)
+								- tiles.indexOf(selectedTile) == 10
+								&& tiles.get(tiles.indexOf(tile) + 10)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) + 10).setPlayer(1);
+							tile.setPlayer(0);
+							selectedTile.setPlayer(0);
+						} else if (tiles.indexOf(selectedTile)
+								- tiles.indexOf(tile) == -8
+								&& tiles.get(tiles.indexOf(tile) + 8)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) + 8).setPlayer(1);
+							tile.setPlayer(0);
+							selectedTile.setPlayer(0);
+
+						} else if (tiles.indexOf(tile)
+								- tiles.indexOf(selectedTile) == -10
+								&& tiles.get(tiles.indexOf(tile) - 10)
+										.getStatus() == TileStatus.EMPTY) {
+							tiles.get(tiles.indexOf(tile) - 10).setPlayer(1);
+							tile.setPlayer(0);
+							selectedTile.setPlayer(0);
+						} else {
+							selectedTile.setPlayer(1);
+						}
 					}
+
+					movingTiles = false;
 				}
 			}
-		}
-
 		checkIfScored();
 	}
 
