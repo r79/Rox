@@ -1,9 +1,11 @@
-package GameEngine;
+package gameEngine;
 
 
-import GameEngine.View;
+import gameEngine.View;
+
 import java.awt.BorderLayout;
 import java.io.IOException;
+
 import javax.swing.JFrame;
 
 /**
