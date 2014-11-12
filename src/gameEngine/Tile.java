@@ -47,14 +47,23 @@ public class Tile {
 	}
 
 	public boolean isOnTile(int inputX, int inputY, int tilesize) {
-		return (inputX > x * tilesize && inputX < (x+1) * tilesize)
+		return inputX > x * tilesize && inputX < (x+1) * tilesize
 				&& inputY > y * tilesize && inputY < (y+1) * tilesize;
 	}
 	
-	public void toggleSelect() {
-		selected = !selected;
+	public void select() {
+		selected = true;
 		updateStatus();
 	}
+
+    public void unselect() {
+        selected = false;
+        updateStatus();
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
 	
 	public boolean isPlayerTile() {
 		return player!=0;
