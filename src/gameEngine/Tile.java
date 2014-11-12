@@ -10,6 +10,7 @@ public class Tile {
 	private TileStatus status;
 	private boolean selected = false;
 	private int player;
+    boolean locked = false;
 	
 	public Tile(int x, int y) {
 		this.x = x;
@@ -20,6 +21,7 @@ public class Tile {
 		switch (player) {
 		case 0:
 			this.status = TileStatus.EMPTY;
+            this.selected = false;
 			break;
 		
 		case 1:
@@ -61,6 +63,10 @@ public class Tile {
         updateStatus();
     }
 
+    public int getPlayer() {
+        return player;
+    }
+
     public boolean isSelected() {
         return selected;
     }
@@ -71,7 +77,12 @@ public class Tile {
 	
 	public void lock() {
 		this.status = TileStatus.LOCKED;
+        locked = true;
 	}
+
+    public boolean isLocked() {
+        return locked;
+    }
 
 	/**
 	 * @return the x
@@ -81,28 +92,11 @@ public class Tile {
 	}
 
 	/**
-	 * @param x
-	 *            the x to set
-	 */
-	public void setX(int x) {
-		this.x = x;
-	}
-
-	/**
 	 * @return the y
 	 */
 	public int getY() {
 		return y;
 	}
-
-	/**
-	 * @param y
-	 *            the y to set
-	 */
-	public void setY(int y) {
-		this.y = y;
-	}
-
 	/**
 	 * @return the status
 	 */

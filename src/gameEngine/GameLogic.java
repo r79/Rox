@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 /**
  * @author Sebastian Galli
+ * @author Raphael Büchler
  */
 public class GameLogic {
 
@@ -67,90 +68,105 @@ public class GameLogic {
                 tile.lock();
             }
 
-            if (tile.getStatus() == TileStatus.PLAYER1) {
-            } else if (tile.getStatus() == TileStatus.PLAYER2) {
-            }
+            //TODO: End the game
+//
+//            if (tile.getStatus() == TileStatus.PLAYER1) {
+//            } else if (tile.getStatus() == TileStatus.PLAYER2) {
+//            }
         }
     }
 
 
-    private Tile previousSelected;
-    private boolean secondSelection = false;
+    private Tile previousSelection;
+    private boolean secondClick = false;
 
     // step() wird aufgerufen sobald ein Spieler mit der Maus klickt.
     // step() lauft dann einmal durch die Logik des Spiels. In ihr sind alle
     // möglichen Spielzüge definiert.
     public void step() throws IndexOutOfBoundsException {
 
-        for (Tile selectedTile : tiles) {
-            if (selectedTile.isOnTile(input.getX(), input.getY(), tileSize)) {
-                if (secondSelection) {
-                    if (selectedTile.isPlayerTile()) {
-                        previousSelected = selectedTile;
-                        secondSelection = true;
-                        selectedTile.select();
+        for (Tile currentSelection : tiles) {
+            if (currentSelection.isOnTile(input.getX(), input.getY(), tileSize) && !currentSelection.isLocked()) {
+                if (!secondClick) {
+                    if (currentSelection.isPlayerTile()) {
+                        previousSelection = currentSelection;
+                        secondClick = true;
+                        currentSelection.select();
                     }
                 } else {
-
-                    if (selectedTile == previousSelected) {
-                        selectedTile.unselect();
-                        secondSelection = false;
+                    if (currentSelection == previousSelection) {
+                        currentSelection.unselect();
                     }
 
-                    if (!selectedTile.isPlayerTile()) {
-                        if ((tiles.indexOf(previousSelected) - tiles.indexOf(selectedTile) <= 10 && tiles.indexOf(previousSelected) - tiles.indexOf(selectedTile) >= 8)
-                                || (tiles.indexOf(selectedTile) - tiles.indexOf(previousSelected) >= 8 && tiles.indexOf(selectedTile) - tiles.indexOf(previousSelected) <= 10)
-                                || (tiles.indexOf(selectedTile) - tiles.indexOf(previousSelected) >= 8 && tiles.indexOf(selectedTile) - tiles.indexOf(previousSelected) <= 10)
-                                || (tiles.indexOf(previousSelected) - tiles.indexOf(selectedTile) == 1
-                                || tiles.indexOf(previousSelected) - tiles.indexOf(selectedTile) == -1)) {
-                            if (previousSelected.isPlayerTile()) {
-                                selectedTile.unselect();
-                                previousSelected.setPlayer(0);
-                            }
+                    if (!currentSelection.isPlayerTile()) {
+                        if ((tiles.indexOf(previousSelection) - tiles.indexOf(currentSelection) <= 10 && tiles.indexOf(previousSelection) - tiles.indexOf(currentSelection) >= 8)
+                                || (tiles.indexOf(currentSelection) - tiles.indexOf(previousSelection) >= 8 && tiles.indexOf(currentSelection) - tiles.indexOf(previousSelection) <= 10)
+                                || (tiles.indexOf(currentSelection) - tiles.indexOf(previousSelection) >= 8 && tiles.indexOf(currentSelection) - tiles.indexOf(previousSelection) <= 10)
+                                || (tiles.indexOf(previousSelection) - tiles.indexOf(currentSelection) == 1
+                                || tiles.indexOf(previousSelection) - tiles.indexOf(currentSelection) == -1)) {
+                            currentSelection.setPlayer(previousSelection.getPlayer());
+                            previousSelection.setPlayer(0);
                         } else {
-                            previousSelected.unselect();
+                            previousSelection.unselect();
                         }
-
-                        secondSelection = false;
-
                     }
 
-                    if (selectedTile.isPlayerTile()) {
-                        if (previousSelected.isSelected()) {
-                            if (tiles.indexOf(selectedTile) % 9 != 0) {
-                                if (tiles.indexOf(previousSelected) - tiles.indexOf(selectedTile) == 8
-                                        && !tiles.get(tiles.indexOf(selectedTile) - 8).isPlayerTile()) {
+                    if (currentSelection.isPlayerTile()) {
+                        if (previousSelection.isSelected()) {
+                            if (tiles.indexOf(currentSelection) % 9 != 0) {
+                                if (tiles.indexOf(previousSelection) - tiles.indexOf(currentSelection) == 8
+                                        && !tiles.get(tiles.indexOf(currentSelection) - 8).isPlayerTile()) {
 
-                                    tiles.get(tiles.indexOf(selectedTile) - 8).unselect();
-                                    previousSelected.setPlayer(0);
+                                    if(currentSelection.getPlayer() != previousSelection.getPlayer()) {
+                                        currentSelection.setPlayer(0);
+                                    }
 
-                                } else if (tiles.indexOf(selectedTile)
-                                        - tiles.indexOf(previousSelected) == 10
-                                        && !tiles.get(tiles.indexOf(selectedTile) + 10).isPlayerTile()) {
+                                    tiles.get(tiles.indexOf(currentSelection) - 8).setPlayer(previousSelection.getPlayer());
+                                    previousSelection.setPlayer(0);
 
-                                    tiles.get(tiles.indexOf(selectedTile) + 10).unselect();
-                                    previousSelected.setPlayer(0);
+                                } else if (tiles.indexOf(currentSelection)
+                                        - tiles.indexOf(previousSelection) == 10
+                                        && !tiles.get(tiles.indexOf(currentSelection) + 10).isPlayerTile()) {
 
-                                } else if (tiles.indexOf(selectedTile)
-                                        - tiles.indexOf(previousSelected) == -10
-                                        && !tiles.get(tiles.indexOf(selectedTile) - 10).isPlayerTile()) {
-                                    tiles.get(tiles.indexOf(selectedTile) - 10).unselect();
-                                    previousSelected.setPlayer(0);
-                                } else if (tiles.indexOf(previousSelected)
-                                        - tiles.indexOf(selectedTile) == -8
-                                        && !tiles.get(tiles.indexOf(selectedTile) + 8).isPlayerTile()) {
-                                    tiles.get(tiles.indexOf(selectedTile) + 8).unselect();
-                                    previousSelected.setPlayer(0);
+                                    if(currentSelection.getPlayer() != previousSelection.getPlayer()) {
+                                        currentSelection.setPlayer(0);
+                                    }
+
+                                    tiles.get(tiles.indexOf(currentSelection) + 10).setPlayer(previousSelection.getPlayer());
+                                    previousSelection.setPlayer(0);
+
+                                } else if (tiles.indexOf(currentSelection)
+                                        - tiles.indexOf(previousSelection) == -10
+                                        && !tiles.get(tiles.indexOf(currentSelection) - 10).isPlayerTile()) {
+
+                                    if(currentSelection.getPlayer() != previousSelection.getPlayer()) {
+                                        currentSelection.setPlayer(0);
+                                    }
+
+                                    tiles.get(tiles.indexOf(currentSelection) - 10).setPlayer(previousSelection.getPlayer());
+                                    previousSelection.setPlayer(0);
+
+                                } else if (tiles.indexOf(previousSelection)
+                                        - tiles.indexOf(currentSelection) == -8
+                                        && !tiles.get(tiles.indexOf(currentSelection) + 8).isPlayerTile()) {
+
+                                    if(currentSelection.getPlayer() != previousSelection.getPlayer()) {
+                                        currentSelection.setPlayer(0);
+                                    }
+
+                                    tiles.get(tiles.indexOf(currentSelection) + 8).setPlayer(previousSelection.getPlayer());
+                                    previousSelection.setPlayer(0);
+
                                 } else {
-                                    previousSelected.unselect();
+                                    previousSelection.unselect();
                                 }
                             } else {
-                                previousSelected.unselect();
+                                previousSelection.unselect();
                             }
 
                         }
-                        secondSelection = false;
                     }
+                    secondClick = false;
                 }
                 checkIfScored();
             }
